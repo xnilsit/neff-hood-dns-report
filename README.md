@@ -41,7 +41,7 @@ attributed.
 
 ## 0 · How DNS reaches the appliance and back
 
-The appliance is on an ordinary home LAN, `192.168.0.0/24`, behind a single router that provides
+The appliance is on an ordinary home LAN, `192.168.0.0/23`, behind a single router that provides
 DHCP and internet access. There is one resolver for the whole network, and every client is pointed
 at it by DHCP:
 
