@@ -1,0 +1,603 @@
+<title>Neff Hood Query Storm</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Serif:ital,wght@0,400;0,600;1,400&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+  :root {
+    --ground: #f6f5f1;
+    --panel: #fffefb;
+    --panel-2: #efeee8;
+    --ink: #191b19;
+    --muted: #5f6560;
+    --rule: #dcd9d0;
+    --accent: #a8500c;
+    --accent-soft: #f0e2d3;
+    --critical: #8e2417;
+    --steady: #3f6b45;
+    --shadow: 0 1px 2px rgba(25, 27, 25, .06);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --ground: #16181a;
+      --panel: #1d2023;
+      --panel-2: #23272b;
+      --ink: #e9e7e2;
+      --muted: #9aa09b;
+      --rule: #31363a;
+      --accent: #e29552;
+      --accent-soft: #33291f;
+      --critical: #e0705e;
+      --steady: #7fb187;
+      --shadow: 0 1px 2px rgba(0, 0, 0, .35);
+    }
+  }
+  :root[data-theme="dark"] {
+    --ground: #16181a;
+    --panel: #1d2023;
+    --panel-2: #23272b;
+    --ink: #e9e7e2;
+    --muted: #9aa09b;
+    --rule: #31363a;
+    --accent: #e29552;
+    --accent-soft: #33291f;
+    --critical: #e0705e;
+    --steady: #7fb187;
+    --shadow: 0 1px 2px rgba(0, 0, 0, .35);
+  }
+
+  body {
+    background: var(--ground);
+    color: var(--ink);
+    font-family: "IBM Plex Serif", Georgia, serif;
+    font-size: 16px;
+    line-height: 1.62;
+  }
+  .wrap {
+    max-width: 940px;
+    margin: 0 auto;
+    padding: 56px 24px 96px;
+    display: flex;
+    flex-direction: column;
+    gap: 40px;
+  }
+  h1, h2, h3, .label, th, .eyebrow, .kicker {
+    font-family: "IBM Plex Sans", system-ui, sans-serif;
+  }
+  h1 {
+    font-size: 34px;
+    line-height: 1.15;
+    font-weight: 600;
+    letter-spacing: -.015em;
+    margin: 0;
+    text-wrap: balance;
+  }
+  h2 {
+    font-size: 19px;
+    font-weight: 600;
+    letter-spacing: -.005em;
+    margin: 0 0 4px;
+  }
+  h3 {
+    font-size: 15px;
+    font-weight: 600;
+    margin: 0 0 2px;
+  }
+  p, li { max-width: 68ch; margin: 0; }
+  section { display: flex; flex-direction: column; gap: 14px; }
+  .eyebrow {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: .12em;
+    color: var(--accent);
+    font-weight: 600;
+  }
+  .head-rule { border: 0; border-top: 2px solid var(--ink); margin: 0; }
+  .sec-rule { border: 0; border-top: 1px solid var(--rule); margin: 0; }
+  code, .mono, td.num, .fig-hint {
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+  }
+  code {
+    font-size: .88em;
+    background: var(--panel-2);
+    padding: 1px 5px;
+    border-radius: 3px;
+    overflow-wrap: anywhere;
+  }
+  ul { margin: 0; padding-left: 22px; display: flex; flex-direction: column; gap: 7px; }
+
+  /* fact sheet */
+  .facts {
+    background: var(--panel);
+    border: 1px solid var(--rule);
+    box-shadow: var(--shadow);
+    padding: 22px 24px;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+    gap: 18px 28px;
+  }
+  .fact .label {
+    font-size: 10.5px;
+    text-transform: uppercase;
+    letter-spacing: .1em;
+    color: var(--muted);
+    font-weight: 600;
+    display: block;
+    margin-bottom: 3px;
+  }
+  .fact .val { font-family: "IBM Plex Mono", monospace; font-size: 13.5px; overflow-wrap: anywhere; }
+
+  /* headline figures */
+  .figures {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 1px;
+    background: var(--rule);
+    border: 1px solid var(--rule);
+  }
+  .figure { background: var(--panel); padding: 18px 20px; }
+  .figure .n {
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 27px;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: -.02em;
+    display: block;
+    color: var(--accent);
+  }
+  .figure .d {
+    font-family: "IBM Plex Sans", sans-serif;
+    font-size: 12.5px;
+    color: var(--muted);
+    line-height: 1.4;
+    display: block;
+    margin-top: 4px;
+  }
+
+  /* tables */
+  .tbl-scroll { overflow-x: auto; border: 1px solid var(--rule); background: var(--panel); }
+  table { border-collapse: collapse; width: 100%; font-size: 13.5px; }
+  th {
+    text-align: left;
+    font-size: 10.5px;
+    text-transform: uppercase;
+    letter-spacing: .09em;
+    color: var(--muted);
+    font-weight: 600;
+    padding: 10px 14px;
+    border-bottom: 1px solid var(--rule);
+    white-space: nowrap;
+    background: var(--panel-2);
+  }
+  td {
+    padding: 9px 14px;
+    border-bottom: 1px solid var(--rule);
+    vertical-align: top;
+  }
+  tr:last-child td { border-bottom: 0; }
+  td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+  td.mono { font-family: "IBM Plex Mono", monospace; font-size: 12.5px; }
+  .hi { color: var(--critical); font-weight: 500; }
+  .cap { font-family: "IBM Plex Sans", sans-serif; font-size: 12px; color: var(--muted); max-width: 68ch; }
+
+  /* transcripts */
+  pre {
+    margin: 0;
+    background: var(--panel-2);
+    border-left: 3px solid var(--accent);
+    padding: 14px 16px;
+    overflow-x: auto;
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 12.5px;
+    line-height: 1.55;
+  }
+
+  /* screenshot slots */
+  .slot {
+    border: 1.5px dashed var(--rule);
+    background: var(--panel);
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .slot .kicker {
+    font-size: 10.5px;
+    text-transform: uppercase;
+    letter-spacing: .1em;
+    color: var(--accent);
+    font-weight: 600;
+  }
+  .slot .box {
+    border: 1px solid var(--rule);
+    background: var(--panel-2);
+    min-height: 96px;
+    display: grid;
+    place-items: center;
+    font-family: "IBM Plex Sans", sans-serif;
+    font-size: 12px;
+    color: var(--muted);
+    text-align: center;
+    padding: 12px;
+  }
+  .fig-hint { font-size: 12px; color: var(--muted); line-height: 1.55; max-width: 78ch; }
+
+  /* embedded screenshots */
+  figure.shot { margin: 0; display: flex; flex-direction: column; gap: 10px; }
+  .shot-frame {
+    border: 1px solid var(--rule);
+    background: #14161a;
+    padding: 8px;
+    overflow-x: auto;
+    box-shadow: var(--shadow);
+  }
+  .shot-frame img { display: block; width: 100%; min-width: 640px; height: auto; }
+  .fig-hint b { font-family: "IBM Plex Sans", sans-serif; color: var(--ink); font-weight: 600; }
+
+  .note {
+    background: var(--accent-soft);
+    border: 1px solid var(--rule);
+    padding: 16px 18px;
+    font-size: 14.5px;
+  }
+  footer { font-size: 12.5px; color: var(--muted); font-family: "IBM Plex Sans", sans-serif; }
+</style>
+
+<div class="wrap">
+
+  <header style="display:flex;flex-direction:column;gap:14px">
+    <span class="eyebrow">DNS behaviour report &middot; Home Connect appliance</span>
+    <h1>Neff extractor hood floods the local resolver with ~100 identical DNS queries per second</h1>
+    <p>Measured on a private home network between 24 and 31 August 2026. This document records
+      observed behaviour and measurement method only. It does not state a cause: we have no
+      visibility into the appliance's software, and we make no claim about why the pattern occurs.</p>
+    <hr class="head-rule">
+  </header>
+
+  <div class="facts">
+    <div class="fact"><span class="label">Appliance</span><span class="val">Neff extractor hood, Home Connect module</span></div>
+    <div class="fact"><span class="label">E-Nr.</span><span class="val">D85IFN1S0/06</span></div>
+    <div class="fact"><span class="label">Z-Nr.</span><span class="val">00206</span></div>
+    <div class="fact"><span class="label">FD-Nr.</span><span class="val">0606</span></div>
+    <div class="fact"><span class="label">Serial number</span><span class="val">306060427408002064</span></div>
+    <div class="fact"><span class="label">Version</span><span class="val">6.1-5.19.0.11 (6.4)</span></div>
+    <div class="fact"><span class="label">SW version (device)</span><span class="val">2444479</span></div>
+    <div class="fact"><span class="label">RED label version</span><span class="val">16788.0.2444479</span></div>
+    <div class="fact"><span class="label">DHCP / mDNS client name</span><span class="val">neff-hood-306060427408002064</span></div>
+    <div class="fact"><span class="label">IPv4 address</span><span class="val">192.168.0.25</span></div>
+    <div class="fact"><span class="label">IPv6 address</span><span class="val">fd2e:9a41:6b8c:1:e667:a6ff:fe21:d331</span></div>
+    <div class="fact"><span class="label">MAC (derived from EUI-64)</span><span class="val">e4:67:a6:21:d3:31</span></div>
+    <div class="fact"><span class="label">Query name</span><span class="val">global.time.appliances.home-connect.com</span></div>
+    <div class="fact"><span class="label">Resolver observed on</span><span class="val">blocky v0.34.0, 3 instances</span></div>
+    <div class="fact"><span class="label">Report date</span><span class="val">2026-08-31</span></div>
+  </div>
+  <p class="cap">Appliance identification as shown in the Home Connect app on 31 August 2026. The
+    client name the appliance announces on the network carries the same serial number, which is how
+    its traffic was attributed.</p>
+
+  <div class="figures">
+    <div class="figure"><span class="n">85.9 q/s</span><span class="d">Mean query rate from this one appliance with no rate limiting, 13-minute window</span></div>
+    <div class="figure"><span class="n">6 792 969</span><span class="d">Queries counted from it on 30 Aug 2026 (00:00–24:00 UTC)</span></div>
+    <div class="figure"><span class="n">97.6 %</span><span class="d">Share of all DNS queries on the network in the last 24 h</span></div>
+    <div class="figure"><span class="n">300 s</span><span class="d">TTL of the record it re-requests roughly 21 times per second</span></div>
+  </div>
+
+  <hr class="sec-rule">
+
+  <section>
+    <span class="eyebrow">0 &middot; The network</span>
+    <h2>How DNS reaches the appliance and back</h2>
+    <p>The appliance is on an ordinary home LAN, <code>192.168.0.0/24</code>, behind a single router
+      that provides DHCP and internet access. There is one resolver for the whole network, and every
+      client is pointed at it by DHCP:</p>
+    <ul>
+      <li>the appliance sends its queries over plain UDP to port 53 of the resolver address it was given — <code>192.168.1.53</code>, and since 29 August also <code>fd2e:9a41:6b8c:1::53</code>;</li>
+      <li>that address is a virtual address served by a small Kubernetes cluster on the same network, announced on the LAN by the cluster's network layer and load-balanced across three instances of the resolver software (blocky v0.34.0);</li>
+      <li>the resolver answers from its own cache where it can. For anything it does not hold, it forwards to the router at <code>192.168.0.1</code>, which in turn uses its own upstream resolver on the internet. Names belonging to the cluster itself go to an internal resolver instead;</li>
+      <li>encrypted transports (DNS over TLS on 853) exist on this resolver but are not involved here: the appliance uses plain UDP, which is also why the dropped queries in Figure 6 are labelled UDP.</li>
+    </ul>
+    <p>Nothing in that path rewrites or filters what the appliance asks for. The one exception is
+      deliberate and documented in this report: during measurement condition 2 a resolver rule
+      answered its query name locally, so that an <code>AAAA</code> address could be supplied.</p>
+    <h3>The cluster was switched to dual-stack on 29 August</h3>
+    <p>Until then the network was IPv4-only from the resolver's point of view. IPv6 was enabled on
+      29 August at <b>10:15 UTC</b>, and the resolver gained the additional address
+      <code>fd2e:9a41:6b8c:1::53</code>. From that minute the appliance appears in the graphs twice —
+      once as <code>192.168.0.25</code> and once as <code>fd2e:9a41:6b8c:1:e667:a6ff:fe21:d331</code>,
+      the same network interface — and it has been running its query loop over both address families
+      at the same rate ever since. This matters when reading the daily volumes: the roughly twofold
+      step on 29 August is the second address family being added by us, not the appliance sending
+      faster. The change from intermittent to continuous on the same day is not explained by it.</p>
+  </section>
+
+  <hr class="sec-rule">
+
+  <section>
+    <span class="eyebrow">1 &middot; Observed behaviour</span>
+    <h2>What the appliance sends</h2>
+    <p>The appliance repeats one single query name, <code>global.time.appliances.home-connect.com</code>,
+      continuously, in four parallel streams:</p>
+    <ul>
+      <li>type <code>A</code> and type <code>AAAA</code>, in roughly equal numbers;</li>
+      <li>each of those over IPv4 (from <code>192.168.0.25</code>) and over IPv6 (from <code>fd2e:9a41:6b8c:1:e667:a6ff:fe21:d331</code>) &mdash; both addresses belong to the same network interface.</li>
+    </ul>
+    <p>Every query is answered. In the measurement windows below there were no timeouts, no
+      <code>SERVFAIL</code>, and no failed upstream lookups; the resolver replied <code>NOERROR</code>
+      to 100 % of them, most from its cache. The appliance nevertheless re-sends the same question
+      within milliseconds.</p>
+    <p>Separately, and at a negligible rate, the appliance sends about one reverse (<code>PTR</code>)
+      query every 20 seconds from each address. Those are answered <code>NXDOMAIN</code>. They are
+      noted for completeness and are not part of the flood.</p>
+  </section>
+
+  <hr class="sec-rule">
+
+  <section>
+    <span class="eyebrow">2 &middot; Measured rates</span>
+    <h2>Query rate, per condition</h2>
+    <p>Rates are counted by the resolver itself (Prometheus counter <code>blocky_query_total</code>,
+      per client address and query type). "Per stream" is the aggregate divided by the four streams.</p>
+    <div class="tbl-scroll">
+      <table>
+        <thead>
+          <tr>
+            <th>#</th><th>Condition</th><th>Window (UTC, 31 Aug unless noted)</th>
+            <th class="num">Aggregate</th><th class="num">Per stream</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="num">1</td>
+            <td>No rate limiting. Resolver returned the genuine records.</td>
+            <td class="mono">30 Aug, 20:00, 5&nbsp;min</td>
+            <td class="num hi">117.4 q/s</td><td class="num">29.2–29.5 q/s</td>
+          </tr>
+          <tr>
+            <td class="num">2</td>
+            <td>No rate limiting. Resolver was configured to answer <em>both</em> <code>A</code> and <code>AAAA</code> with addresses, so the appliance received a full answer to every question.</td>
+            <td class="mono">12:54–12:59</td>
+            <td class="num hi">109.2 q/s</td><td class="num">≈27.3 q/s</td>
+          </tr>
+          <tr>
+            <td class="num">3</td>
+            <td>No rate limiting. Genuine answers again: <code>A</code> with two addresses, <code>AAAA</code> empty (the zone has no AAAA record).</td>
+            <td class="mono">13:06–13:19, sampled each minute</td>
+            <td class="num hi">85.9 q/s mean<br>31.5–132.1 q/s range</td><td class="num">≈21.5 q/s</td>
+          </tr>
+          <tr>
+            <td class="num">4</td>
+            <td>Rate limiting active: 10 q/s per client address, excess queries silently dropped.</td>
+            <td class="mono">13:24 onwards</td>
+            <td class="num">19.9 q/s<br>+ ≈1.3 q/s dropped</td><td class="num">≈4.97 q/s</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="cap">Conditions 2 and 3 differ only in what the appliance was told about
+      <code>AAAA</code>. Supplying an <code>AAAA</code> address did not reduce the rate; it was, if
+      anything, slightly higher. Under condition 4 the appliance sits exactly at the imposed
+      ceiling continuously &mdash; it keeps offering more queries than the ceiling allows and does not
+      slow down when they go unanswered.</p>
+  </section>
+
+  <hr class="sec-rule">
+
+  <section>
+    <span class="eyebrow">3 &middot; Volume and share</span>
+    <h2>How the volume compares to the rest of the network</h2>
+    <div class="tbl-scroll">
+      <table>
+        <thead><tr><th>Source</th><th class="num">DNS queries, last 24 h</th><th class="num">Share</th></tr></thead>
+        <tbody>
+          <tr><td>Neff hood (both addresses)</td><td class="num hi">4 002 742</td><td class="num">97.6 %</td></tr>
+          <tr><td>Every other client on the network combined (≈40 devices, incl. workstations, phones, servers, other Home Connect appliances)</td><td class="num">97 125</td><td class="num">2.4 %</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="cap">The 24-hour figure for the hood is itself suppressed &mdash; rate limiting was active for
+      most of that period. On 30 August, with no limiting in place, the resolver counted
+      <b>6 792 969</b> queries from this appliance in one day, and <b>12 702 796</b> over seven days.
+      The busiest human-operated device on the network peaked at 5.6 q/s; the hood's unthrottled
+      mean is roughly 15 times that peak, sustained around the clock.</p>
+    <div class="tbl-scroll">
+      <table>
+        <thead><tr><th>Date (UTC)</th><th class="num">Queries from the hood</th><th class="num">Share of the day above 10 q/s</th></tr></thead>
+        <tbody>
+          <tr><td class="mono">2026-08-24</td><td class="num">168 880</td><td class="num">8 %</td></tr>
+          <tr><td class="mono">2026-08-25</td><td class="num">527 819</td><td class="num">23 %</td></tr>
+          <tr><td class="mono">2026-08-26</td><td class="num">330 818</td><td class="num">26 %</td></tr>
+          <tr><td class="mono">2026-08-27</td><td class="num">15 376</td><td class="num">0 %</td></tr>
+          <tr><td class="mono">2026-08-28</td><td class="num">76 776</td><td class="num">2 %</td></tr>
+          <tr><td class="mono">2026-08-29</td><td class="num">3 881 562</td><td class="num">64 %</td></tr>
+          <tr><td class="mono">2026-08-30</td><td class="num hi">6 792 969</td><td class="num">100 %</td></tr>
+          <tr><td class="mono">2026-08-31 (to 13:00, rate limited)</td><td class="num">1 067 645</td><td class="num">100 %</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="cap">The pattern was intermittent between 24 and 28 August and continuous from 29 August
+      onwards. Two things to read carefully here: the appliance was not touched at that transition, and
+      part of the step is ours — IPv6 was enabled on 29 August at 10:15 UTC, after which the same loop
+      is counted twice, once per address family. Halving the figures from 29 August for that reason
+      still leaves roughly 1.9 million and 3.4 million queries per day against 15 to 528 thousand in
+      the days before, so the shift from intermittent to continuous is not a counting effect.</p>
+  </section>
+
+  <hr class="sec-rule">
+
+  <section>
+    <span class="eyebrow">4 &middot; Answers the appliance received</span>
+    <h2>The DNS data involved</h2>
+    <p>The name resolves normally. Queried directly at the authoritative name server for the zone:</p>
+    <pre>$ dig @ns-214.awsdns-26.com global.time.appliances.home-connect.com A
+
+;; flags: qr aa rd; QUERY: 1, ANSWER: 2, AUTHORITY: 4
+;; ANSWER SECTION:
+global.time.appliances.home-connect.com. 300 IN A 166.117.100.221
+global.time.appliances.home-connect.com. 300 IN A 166.117.209.92</pre>
+    <pre>$ dig @ns-214.awsdns-26.com global.time.appliances.home-connect.com AAAA
+
+;; flags: qr aa rd; status: NOERROR; QUERY: 1, ANSWER: 0, AUTHORITY: 1
+;; AUTHORITY SECTION:
+appliances.home-connect.com. 900 IN SOA ns-214.awsdns-26.com.
+    awsdns-hostmaster.amazon.com. 1 7200 900 1209600 86400</pre>
+    <ul>
+      <li>The <code>A</code> records carry a TTL of <b>300 seconds</b>. The appliance re-requests them roughly 21 times per second.</li>
+      <li>There is no <code>AAAA</code> record for this name. The authoritative answer is an empty <code>NOERROR</code> with an <code>SOA</code> in the authority section, i.e. a negative answer that is cacheable for 900 seconds.</li>
+      <li>The appliance queries both types at the same rate regardless.</li>
+    </ul>
+    <div class="note">
+      <p>To rule out the empty <code>AAAA</code> answer as the trigger, we made the local resolver
+        answer <code>AAAA</code> for this name with a real address for the duration of condition 2
+        above. The query rate did not fall. That is an observation, not an explanation.</p>
+    </div>
+  </section>
+
+  <hr class="sec-rule">
+
+  <section>
+    <span class="eyebrow">5 &middot; Method</span>
+    <h2>How this was measured</h2>
+    <ul>
+      <li>The network's only resolver is blocky v0.34.0, three instances behind one service address, forwarding to the router. All LAN clients use it via DHCP.</li>
+      <li>Counts come from the resolver's own Prometheus metrics (<code>blocky_query_total</code>, <code>blocky_response_total</code>, <code>blocky_rate_limit_drops_total</code>), labelled per client address and query type, scraped at 30-second intervals and retained in VictoriaMetrics. The per-query log is stored separately in TimescaleDB.</li>
+      <li>For conditions 2 and 3 the resolver's rate limiter was raised out of the way (2000 q/s) so the figures are the appliance's <em>offered</em> load, not a throttled figure. The original 10 q/s limit was restored afterwards.</li>
+      <li>Client identity comes from the appliance's own DHCP/reverse name, <code>neff-hood-306060427408002064</code>; the IPv6 address is its interface identifier, and the MAC above is derived from that EUI-64 (<code>e667:a6ff:fe21:d331</code> → <code>e4:67:a6:21:d3:31</code>).</li>
+      <li>Rates quoted in the table are read from windows that lie entirely after a configuration change had taken effect. A rate window spanning a resolver restart over-reports, which is the one spike visible in Figure 2.</li>
+      <li>The queries observed in condition 2 were answered by a resolver rule that matches this name only. That rule accounted for 109.0 of 109.2 q/s in that window, which confirms the appliance's traffic is this single query name and nothing else.</li>
+    </ul>
+    <h3>Not determined</h3>
+    <ul>
+      <li>Why the appliance behaves this way. We did not capture its traffic at packet level and have no access to its software.</li>
+      <li>Whether its time synchronisation succeeds or fails, and whether the two are related.</li>
+      <li>Whether other units of the same model are affected. We can only report this one appliance, plus the fact that the other Home Connect appliances on the same network (dishwasher, hob) query at a negligible rate.</li>
+    </ul>
+  </section>
+
+  <hr class="sec-rule">
+
+  <section>
+    <span class="eyebrow">6 &middot; Evidence</span>
+    <h2>Dashboard screenshots</h2>
+    <p class="cap">Slots to be filled from the resolver's Grafana dashboards. Each caption states the
+      exact panel and time range so the figure can be reproduced.</p>
+
+    <figure class="shot">
+      <span class="kicker">Figure 1 &middot; DNS query rate per client, 24–31 August 2026</span>
+      <div class="shot-frame"><img src="./figures/figure-1-query-rate-7d.png" alt="Grafana time series of DNS query rate per client from 24 to 31 August 2026. Two series belonging to the Neff hood dominate the chart at 30 to 60 queries per second; every other client stays near zero. Traffic is intermittent until 28 August, continuous from 29 August, then steps down to a flat 10 queries per second on 31 August when rate limiting was applied, followed by a tall spike during the unthrottled measurement."></div>
+      <figcaption class="fig-hint">Resolver panel “Query rate by client (top 10)”, one week to
+        31 August 12:00 UTC. The two upper series are the hood's IPv4 and IPv6 addresses; the legend
+        gives them a mean of 11.4 and 30.0 q/s and a maximum of 107 and 126 q/s. Every other client on
+        the network — the eight further series listed — stays below 1.8 q/s at its own maximum. The
+        intermittent phase up to 28 August, the continuous phase from 29 August, the flat step on
+        31 August 00:00 where the 10 q/s limit was applied, and the spike at the right where the limit
+        was lifted for measurement are all visible in one view. The second series starts mid-chart, on
+        29 August at 10:15 UTC: that is the moment IPv6 was enabled on this network, after which the
+        appliance ran the same loop over both address families. The names of the household's other
+        devices are blanked out in the legend; their series and figures are untouched.</figcaption>
+    </figure>
+
+    <figure class="shot">
+      <span class="kicker">Figure 2 &middot; The measurement windows, 31 August 12:45–13:30 UTC</span>
+      <div class="shot-frame"><img src="./figures/figure-2-measurement-windows.png" alt="Grafana time series of DNS query rate per client between 12:45 and 13:30 UTC. Two series belonging to the Neff hood sit near 10 queries per second until 12:53, then rise to plateaus between 40 and 90 queries per second each while rate limiting is lifted, with one narrow spike to 191, and drop back to a flat 9.12 queries per second after 13:20. All other clients stay near zero throughout."></div>
+      <figcaption class="fig-hint">Same panel, zoomed to the measurement. Until 12:53 both of the
+        appliance's addresses sit at the imposed 10 q/s ceiling. The raised plateaus are conditions 2
+        (12:54–12:59) and 3 (13:00–13:19) from the table above, each address running between roughly
+        40 and 90 q/s, i.e. an aggregate of 120–140 q/s at the plateaus; the legend gives the two
+        series a mean of 35.2 and 33.7 q/s across the whole 45-minute view, which includes the
+        limited periods at both ends. From 13:20 both addresses are pinned at 9.12 q/s, the restored
+        ceiling. Two artefacts of the measurement, not appliance behaviour: the drops to zero at
+        13:00, 13:11 and 13:19 are the resolver instances being replaced when the configuration was
+        changed, and the narrow 191 q/s spike just before 13:00 is a counter-rate artefact across one
+        of those restarts. The plateau values either side of it are the valid readings. Other devices'
+        names are blanked out in the legend for privacy.</figcaption>
+    </figure>
+
+    <figure class="shot">
+      <span class="kicker">Figure 3 &middot; A full 24 hours, 30 August 02:00 to 31 August 02:00 UTC</span>
+      <div class="shot-frame"><img src="./figures/figure-3-one-day.png" alt="Grafana panels for a single day: query rate by client, a top-clients bar gauge where the two Neff hood entries read 3.39 and 3.37 million against 31.2 thousand for the next client, a query-types donut split evenly between A and AAAA at 3.41 million each, and a response-codes donut showing NOERROR at 100 percent."></div>
+      <figcaption class="fig-hint">Four resolver panels over one 24-hour window, 30 August 02:00 to
+        31 August 02:00 UTC (this dashboard plots UTC). The last two hours of the window are already
+        under the 10 q/s limit, which is the low flat tail on the right of the rate panel.
+        <b>Top clients:</b> the appliance's two addresses account for
+        3.39 million and 3.37 million queries, 6.76 million together; the next busiest client on the
+        network is at 31.2 thousand, and the remaining eight are between 4.25 and 8.26 thousand.
+        <b>Query types:</b> an even split, 3.41 million <code>A</code> and 3.41 million
+        <code>AAAA</code> — 50 % each — with every other type on the network (HTTPS, PTR, SVCB, SRV,
+        TXT, SOA, NAPTR) together under 42 thousand. <b>Response codes:</b> 6.84 million
+        <code>NOERROR</code>, 100 % after rounding, against 19.3 thousand <code>NXDOMAIN</code> and
+        106 <code>REFUSED</code> — the appliance's queries were all answered successfully.
+        <b>Query rate:</b> the appliance's two addresses averaged 39.6 and 36.3 q/s across the day and
+        peaked at 69.3 and 106 q/s. The names of the household's other devices are blanked out in
+        both panels for privacy; their query counts and bars are untouched.</figcaption>
+    </figure>
+
+    <figure class="shot">
+      <span class="kicker">Figure 4 &middot; Query-log totals for the two addresses, 30 August 00:00–24:00 UTC</span>
+      <div class="shot-frame"><img src="./figures/figure-4-querylog-totals.png" alt="Resolver query-log table filtered to the appliance's two addresses for 30 August 2026, 00:00 to 24:00 UTC. The IPv6 address shows 3,342,959 queries and the IPv4 client name 3,360,169, each with 8 blocked, 0 percent blocked, 0 NXDOMAIN, and average response times of 9.30 and 7.50 milliseconds."></div>
+      <figcaption class="fig-hint">The same day counted from the resolver's per-query log instead of
+        its metrics, filtered to the appliance's two addresses: <b>3 342 959</b> queries from the IPv6
+        address and <b>3 360 169</b> from the IPv4 address, <b>6 703 128</b> together. The metrics
+        counter gives 6 792 969 for the same window; the two pipelines differ by 1.3 %, which is how
+        each of them samples and flushes, not a difference in the appliance's behaviour. Either way the
+        order of magnitude is confirmed by two independent sources. The remaining columns show that
+        nothing on this side was interfering with the traffic: 8 blocked queries out of 6.7 million,
+        0 % blocked, no <code>NXDOMAIN</code>, and an average response time of 7.50 and 9.30 ms.</figcaption>
+    </figure>
+
+    <figure class="shot">
+      <span class="kicker">Figure 5 &middot; Which domains the appliance asked for, 30 August 00:00–24:00 UTC</span>
+      <div class="shot-frame"><img src="./figures/figure-5-client-to-domain.png" alt="Resolver query-log table mapping the appliance's two addresses to the domains they queried on 30 August 2026 UTC. Both addresses show home-connect.com with 3,360,141 and 3,342,951 queries and zero blocked; a third row shows homeconnectegw.com with 28 queries, 8 of them blocked."></div>
+      <figcaption class="fig-hint">The same window as Figure 4, grouped by registrable domain instead of
+        by client. Both addresses queried <code>home-connect.com</code> — <b>3 360 141</b> and
+        <b>3 342 951</b> times, none of them blocked. Those two figures are the totals from Figure 4
+        minus 28 and 8 respectively, and the remainder is visible as the third row: 28 queries for
+        <code>homeconnectegw.com</code>. So <b>99.999 %</b> of everything this appliance asked the
+        resolver in 24 hours was a single registrable domain, and within it a single name — during
+        condition 2 a resolver rule matching only
+        <code>global.time.appliances.home-connect.com</code> answered 109.0 of the 109.2 q/s then
+        arriving.</figcaption>
+    </figure>
+
+    <div class="note">
+      <p>For completeness, and because it is visible in Figure 5: the appliance also sent 28 queries
+        for <code>homeconnectegw.com</code> from its IPv4 address in those 24 hours, 8 of which were
+        blocked; Figure 4 shows the same count of 8 blocked for the IPv6 address. Those blocks come
+        from a third-party advertising and tracking blocklist we run on this resolver, not from a
+        deliberate block of Home Connect infrastructure. It concerns 16 queries out of 6.7 million and
+        is unrelated to the behaviour reported here, but we mention it so the figures are complete.</p>
+    </div>
+
+    <figure class="shot">
+      <span class="kicker">Figure 6 &middot; Queries dropped by the rate limiter, 31 August 13:20–13:55 UTC</span>
+      <div class="shot-frame"><img src="./figures/figure-6-dropped-queries.png" alt="Grafana time series of queries dropped by the resolver's rate limiter over 35 minutes. After an initial peak of about 5 per second the line never returns to zero, oscillating between roughly 0.8 and 2.8 dropped queries per second, with a legend mean of 1.59 per second."></div>
+      <figcaption class="fig-hint">The 35 minutes after the 10 q/s ceiling was restored. The dropped-query
+        rate never returns to zero: mean <b>1.59 q/s</b>, maximum <b>5.08 q/s</b>, still
+        <b>1.45 q/s</b> at the right edge. Every one of those is a query the appliance sent beyond the
+        ceiling and received no answer to at all. It has been in this state continuously since the
+        limit was applied, which is the clearest single indication that unanswered queries do not slow
+        it down.</figcaption>
+    </figure>
+  </section>
+
+  <hr class="sec-rule">
+
+  <section>
+    <span class="eyebrow">7 &middot; Request</span>
+    <h2>What we are asking for</h2>
+    <p>We are asking for a firmware fix for this appliance's DNS behaviour. Specifically, so that the
+      appliance:</p>
+    <ul>
+      <li>respects the TTL of the answer it received and does not re-query the same name until that TTL expires;</li>
+      <li>caches, or at least tolerates, an empty <code>AAAA</code> answer for a name that has no <code>AAAA</code> record;</li>
+      <li>backs off, rather than retrying at millisecond intervals, when a query goes unanswered.</li>
+    </ul>
+    <p>In its current state one appliance produces around 7 million DNS queries per day and 97.6 % of
+      all DNS traffic on this network. We currently limit it to 10 queries per second per address at
+      the resolver, which caps the damage but leaves the appliance in a permanent retry state and
+      means part of its traffic is dropped.</p>
+    <p>The appliance is identified at the top of this report (E-Nr. D85IFN1S0/06, FD 0606, serial
+      306060427408002064, software version 2444479). We can supply, on request: the full per-query log
+      for any period listed above, and a packet capture of the appliance's DNS traffic.</p>
+  </section>
+
+  <hr class="sec-rule">
+  <footer>Prepared 31 August 2026 from resolver metrics and query logs of a private residential
+    network. All times UTC. Figures are as measured; no inference about cause is made.</footer>
+
+</div>
